@@ -1,0 +1,68 @@
+name: Nightly Database Backup
+author: TRASER Software GmbH
+inputs:
+  shell:
+    description: Shell in which you want to run the action (powershell or pwsh)
+    required: false
+    default: powershell
+  containerName:
+    description: Name for the backup container
+    required: false
+    default: nightly-backup
+  bcVersion:
+    description: Business Central version to use
+    required: false
+    default: *
+  appList:
+    description: JSON array of apps to install
+    required: false
+    default: *
+  licenseFile:
+    description: License file URL or path
+    required: false
+    default: *
+  rapidStartLanguage:
+    description: RapidStart language code
+    required: false
+    default: DE
+  retentionDays:
+    description: Number of days to keep backups
+    required: false
+    default: *
+  storageLocation:
+    description: Path where backups should be stored
+    required: false
+    default: *
+  forceRecreate:
+    description: Force recreation of backup even if recent one exists
+    required: false
+    default: 'false'
+outputs:
+  backupPath:
+    description: Path to the created backup
+  backupTimestamp:
+    description: Timestamp of the backup creation
+  containerName:
+    description: Name of the backup container used
+  message:
+    description: Backup operation result message
+runs:
+  using: composite
+  steps:
+    - name: run
+      shell: ${{ inputs.shell }}
+      env:
+        _containerName: ${{ inputs.containerName }}
+        _bcVersion: ${{ inputs.bcVersion }}
+        _appList: ${{ inputs.appList }}
+        _licenseFile: ${{ inputs.licenseFile }}
+        _rapidStartLanguage: ${{ inputs.rapidStartLanguage }}
+        _retentionDays: ${{ inputs.retentionDays }}
+        _storageLocation: ${{ inputs.storageLocation }}
+      run: |
+        ${{ github.action_path }}/../Invoke-AlGoAction.ps1 -ActionName "NightlyBackup" -Action {
+          ${{ github.action_path }}/NightlyBackup.ps1 -containerName $ENV:_containerName -bcVersion $ENV:_bcVersion -appList $ENV:_appList -licenseFile $ENV:_licenseFile -rapidStartLanguage $ENV:_rapidStartLanguage -retentionDays $ENV:_retentionDays -storageLocation $ENV:_storageLocation -forceRecreate ($ENV:_forceRecreate -eq 'true')
+        }
+branding:
+  icon: terminal
+  color: blue

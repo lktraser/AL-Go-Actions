@@ -1,0 +1,67 @@
+name: PR Container Management
+author: TRASER Software GmbH
+inputs:
+  shell:
+    description: Shell in which you want to run the action (powershell or pwsh)
+    required: false
+    default: powershell
+  operation:
+    description: Operation to perform: create, update, remove
+    required: true
+  prId:
+    description: Pull Request ID
+    required: true
+  containerName:
+    description: Override container name (defaults to pr{prId})
+    required: false
+    default: *
+  backupPath:
+    description: Path to backup file for restore
+    required: false
+    default: *
+  domainName:
+    description: Domain name for container access
+    required: false
+    default: *
+  useTraefik:
+    description: Use Traefik for reverse proxy
+    required: false
+    default: 'true'
+  resourceLimits:
+    description: JSON object with CPU and memory limits
+    required: false
+    default: *
+  forceCleanup:
+    description: Force cleanup of existing container
+    required: false
+    default: 'false'
+  postComment:
+    description: Post container URL as PR comment
+    required: false
+    default: 'true'
+outputs:
+  containerName:
+    description: Name of the container
+  containerUrl:
+    description: URL to access the container
+  message:
+    description: Operation result message
+runs:
+  using: composite
+  steps:
+    - name: run
+      shell: ${{ inputs.shell }}
+      env:
+        _operation: ${{ inputs.operation }}
+        _prId: ${{ inputs.prId }}
+        _containerName: ${{ inputs.containerName }}
+        _backupPath: ${{ inputs.backupPath }}
+        _domainName: ${{ inputs.domainName }}
+        _resourceLimits: ${{ inputs.resourceLimits }}
+      run: |
+        ${{ github.action_path }}/../Invoke-AlGoAction.ps1 -ActionName "PRContainer" -Action {
+          ${{ github.action_path }}/PRContainer.ps1 -operation $ENV:_operation -prId $ENV:_prId -containerName $ENV:_containerName -backupPath $ENV:_backupPath -domainName $ENV:_domainName -useTraefik ($ENV:_useTraefik -eq 'true') -resourceLimits $ENV:_resourceLimits -forceCleanup ($ENV:_forceCleanup -eq 'true') -postComment ($ENV:_postComment -eq 'true')
+        }
+branding:
+  icon: terminal
+  color: blue
